@@ -2,53 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 优化：横屏核心meta标签 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="screen-orientation" content="landscape">
-    <meta name="x5-orientation" content="landscape">
-    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新年祝福</title>
     <style>
-        /* 新增：强制横屏提示样式（核心） */
-        .orientation-lock {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #0a0a0a;
-            color: #ffd700;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 99999 !important;
-            font-family: '楷体', 'KaiTi', serif;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .orientation-lock .icon {
-            font-size: 80px;
-            margin-bottom: 30px;
-            animation: rotatePhone 2s infinite ease-in-out;
-        }
-        
-        .orientation-lock .text {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
-        
-        .orientation-lock .subtext {
-            font-size: 18px;
-            opacity: 0.8;
-        }
-        
-        @keyframes rotatePhone {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-        }
-
         /* 封面样式 */
         body {
             background-color: #0a0a0a; 
@@ -124,22 +80,6 @@
             color: #ffd700;
             font-size: 20px;
             margin-bottom: 10px;
-        }
-
-        /* 新增：手机横屏响应式优化 */
-        @media screen and (max-width: 768px) and (orientation: landscape) {
-            /* 只优化字体大小，其他样式保持不变 */
-            #text-container {
-                font-size: 24px;
-            }
-            
-            .option-btn {
-                font-size: 18px;
-            }
-            
-            .music-tip {
-                font-size: 16px;
-            }
         }
 
         /* 烟花样式 */
@@ -749,13 +689,6 @@ q:before, q:after {
     <script src="files/js/jquery.min.js" type="text/javascript"></script>
 </head>
 <body>
-    <!-- 新增：强制横屏提示层 -->
-    <div class="orientation-lock">
-        <div class="icon">📱</div>
-        <div class="text">请将手机横屏观看</div>
-        <div class="subtext">横屏后可获得最佳观赏效果</div>
-    </div>
-
     <!-- 音频标签 -->
     <audio
       id="audioDom"
@@ -911,42 +844,6 @@ q:before, q:after {
     <script src="files/js/script.js"></script>
 
     <script>
-        // 新增：检查屏幕方向的函数
-        function checkOrientation() {
-            const isMobile = window.innerWidth < 768;
-            const isPortrait = window.innerHeight > window.innerWidth;
-            const orientationLock = document.querySelector('.orientation-lock');
-            
-            if (isMobile && isPortrait) {
-                // 移动端竖屏，显示强制横屏提示
-                orientationLock.style.display = 'flex';
-            } else {
-                // 横屏或桌面端，隐藏强制横屏提示
-                orientationLock.style.display = 'none';
-            }
-        }
-        
-        // 新增：监听屏幕旋转事件，确保横屏提示正确显示/隐藏
-        window.addEventListener('orientationchange', function() {
-            // 强制页面重新渲染
-            document.body.style.display = 'none';
-            setTimeout(() => {
-                document.body.style.display = 'flex';
-                // 重新检查屏幕方向
-                checkOrientation();
-                // 重新适配烟花画布大小
-                if (typeof handleResize === 'function') {
-                    handleResize();
-                }
-            }, 10);
-        });
-        
-        // 新增：监听窗口大小变化事件，确保横屏提示正确显示/隐藏
-        window.addEventListener('resize', checkOrientation);
-        
-        // 新增：页面加载时检查屏幕方向
-        window.addEventListener('load', checkOrientation);
-
         // 音乐播放核心函数
         const audioDom = document.getElementById('audioDom');
         function playMusic() {

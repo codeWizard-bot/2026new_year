@@ -917,55 +917,26 @@ q:before, q:after {
     <script src="files/js/script.js"></script>
 
     <script>
-        // 新增：检查屏幕方向的函数
-        function checkOrientation() {
-            const isMobile = window.innerWidth < 768;
-            const isPortrait = window.innerHeight > window.innerWidth;
-            const orientationLock = document.querySelector('.orientation-lock');
-            
-            if (isMobile && isPortrait) {
+        // 新增：dth && window.innerWidth < 768) {
                 // 移动端竖屏，显示强制横屏提示
-                orientationLock.style.display = 'flex';
-            } else {
-                // 横屏或桌面端，隐藏强制横屏提示
-                orientationLock.style.display = 'none';
+                document.querySelector('.orientation-lock').style.display = 'flex';
             }
-        }
-        
-        // 新增：监听屏幕旋转事件，确保横屏提示正确显示/隐藏
-        window.addEventListener('orientationchange', function() {
-            // 强制页面重新渲染
-            document.body.style.display = 'none';
-            setTimeout(() => {
-                document.body.style.display = 'flex';
-                // 重新检查屏幕方向
-                checkOrientation();
-                // 重新适配烟花画布大小
-                if (typeof handleResize === 'function') {
-                    handleResize();
-                }
-            }, 10);
         });
-        
-        // 新增：监听窗口大小变化事件，确保横屏提示正确显示/隐藏
-        window.addEventListener('resize', checkOrientation);
-        
-        // 新增：页面加载时检查屏幕方向
-        window.addEventListener('load', checkOrientation);
 
         // 音乐播放核心函数
-        const audioDom = document.getElementById('audioDom');
-        function playMusic() {
-            audioDom.play().then(() => {
-                console.log('音乐播放成功');
-                // 播放后隐藏提示
-                document.querySelector('.music-tip').style.display = 'none';
-                // 音乐播放成功后开始显示文本内容
-                startTextDisplay();
-                // 存储音乐播放状态
-                setInterval(() => {
-                    localStorage.setItem('musicPlaying', 'true');
-                    localStorage.setItem('musicTime', audioDom.currentTime);
+        const audioDom = document.getElementById(ioDom');
+   }, 10);oayMusic() {
+my().then(() => {
+            console.log('音乐播放成功'r     Canvas       // 播放后隐藏提示
+            documrrySelCanvasecttyle.display =';
+                // 音乐播放成功后开始显示文本内页面加载时检查 幕方向extDisplay();
+                // 存load态
+ fun tion() {
+            if (window.inn  H igh  > window.innerWid h && w nd w.inserWidth < 768e {Interval() => {
+    移动端竖屏，显示强制横 提示          localStgecumm(i.queryScllctoayi.g
+         -lock').style.display = 'flex';
+            }
+        }           localStorage.setItem('musicTime', audioDom.currentTime);
                 }, 1000);
             }).catch(err => {
                 console.log('播放报错：', err);

@@ -917,27 +917,41 @@ q:before, q:after {
     <script src="files/js/script.js"></script>
 
     <script>
+        // 新增：检查屏幕方向的函数
+        function checkOrientation() {
+            const isMobile = window.innerWidth < 768;
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const orientationLock = document.querySelector('.orientation-lock');
+            
+            if (isMobile && isPortrait) {
+                // 移动端竖屏，显示强制横屏提示
+                orientationLock.style.display = 'flex';
+            } else {
+                // 横屏或桌面端，隐藏强制横屏提示
+                orientationLock.style.display = 'none';
+            }
+        }
+        
         // 新增：监听屏幕旋转事件，确保横屏提示正确显示/隐藏
         window.addEventListener('orientationchange', function() {
             // 强制页面重新渲染
             document.body.style.display = 'none';
             setTimeout(() => {
                 document.body.style.display = 'flex';
+                // 重新检查屏幕方向
+                checkOrientation();
+                // 重新适配烟花画布大小
+                if (typeof handleResize === 'function') {
+                    handleResize();
+                }
             }, 10);
-            
-            // 重新适配烟花画布大小
-            if (typeof resizeCanvas === 'function') {
-                resizeCanvas();
-            }
         });
         
+        // 新增：监听窗口大小变化事件，确保横屏提示正确显示/隐藏
+        window.addEventListener('resize', checkOrientation);
+        
         // 新增：页面加载时检查屏幕方向
-        window.addEventListener('load', function() {
-            if (window.innerHeight > window.innerWidth && window.innerWidth < 768) {
-                // 移动端竖屏，显示强制横屏提示
-                document.querySelector('.orientation-lock').style.display = 'flex';
-            }
-        });
+        window.addEventListener('load', checkOrientation);
 
         // 音乐播放核心函数
         const audioDom = document.getElementById('audioDom');

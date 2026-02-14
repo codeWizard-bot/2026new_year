@@ -2,14 +2,32 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 新增：强制横屏核心meta标签 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <meta name="screen-orientation" content="landscape">
     <meta name="x5-orientation" content="landscape">
+    <meta name="x5-page-mode" content="landscape">
     <meta name="msapplication-tap-highlight" content="no">
-    <title>新年祝福</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>新年烟花祝福</title>
     <style>
-        /* 新增：强制横屏提示样式（核心） */
+        
+        /* 全局重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: "Microsoft Yahei", "微软雅黑", sans-serif;
+        }
+
+        /* 强制横屏提示层 */
         .orientation-lock {
             position: fixed;
             top: 0;
@@ -44,1230 +62,414 @@
             opacity: 0.8;
         }
         
+        .wechat-tip {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #ffd700;
+            opacity: 0.9;
+        }
+        
         @keyframes rotatePhone {
             0%, 100% { transform: rotate(0deg); }
             50% { transform: rotate(90deg); }
         }
 
-        /* 媒体查询：横屏时隐藏强制横屏提示 */
-        @media (orientation: landscape) {
-            .orientation-lock {
-                display: none !important;
-            }
-        }
-        
-        /* 媒体查询：竖屏时显示强制横屏提示（针对移动设备） */
-        @media (orientation: portrait) and (max-width: 768px) {
-            .orientation-lock {
-                display: flex !important;
-            }
-            
-            /* 竖屏时隐藏所有内容，只显示提示 */
-            body > *:not(.orientation-lock) {
-                display: none !important;
-            }
+        /* 烟花画布样式 */
+        #fireworksCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
         }
 
-        /* 封面样式 */
-        body {
-            background-color: #0a0a0a; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: '楷体', 'KaiTi', serif;
-            color: #ffd700; 
-            overflow: hidden;
-        }
-        #text-container {
-            text-align: center;
-            font-size: 40px; 
-            margin-top: 20px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 1s ease, transform 1s ease;
-        }
-        .firework {
-            position: absolute;
-            width: 10px;
-            height: 10px;
+        /* 音乐控制按钮 */
+        .music-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            background-color: #ffd700;
-            animation: sparkle 2s ease-out forwards;
-        }
-        @keyframes sparkle {
-            0% {
-                transform: scale(0);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 0;
-            }
-        }
-        .show {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-        .options-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 40px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 1s ease, transform 1s ease;
-        }
-        .option-btn {
-            padding: 15px 30px;
+            background: rgba(255, 215, 0, 0.3);
+            border: 2px solid #ffd700;
+            color: #ffd700;
             font-size: 24px;
-            font-family: '楷体', 'KaiTi', serif;
-            background-color: rgba(255, 215, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 999;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* 封面文字样式 */
+        .cover-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffd700;
+            font-size: 48px;
+            text-align: center;
+            text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;
+            z-index: 10;
+            animation: fadeIn 3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* 手动关闭横屏提示的按钮样式 */
+        .orientation-lock button {
+            margin-top: 30px;
+            padding: 10px 20px;
+            background: rgba(255,215,0,0.3);
             color: #ffd700;
             border: 2px solid #ffd700;
-            border-radius: 10px;
+            border-radius: 8px;
+            font-size: 18px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .option-btn:hover {
-            background-color: rgba(255, 215, 0, 0.4);
-            transform: scale(1.05);
+
+        .orientation-lock button:hover {
+            background: rgba(255,215,0,0.5);
         }
-        /* 新增：播放提示样式，和页面风格统一 */
-        .music-tip {
-            text-align: center;
-            padding: 10px;
-            color: #ffd700;
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-
-        /* 烟花样式 */
-        .div_btn {
-            position: fixed;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            font-size: 0.8rem;
-            line-height: 32px;
-            text-align: center;
-            z-index: 999;
-        }
-
-        .div_btn a {
-            color: #FFF;
-            text-decoration: none;
-        }
-
-        #div_support {
-            bottom: 120px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, .3);
-        }
-
-        #btn-make {
-            bottom: 170px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, .3);
-        }
-
-        * {
-            position: relative;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-        }
-
-        html {
-            background-color: #000;
-        }
-
-        body {
-            overflow: hidden;
-            color: rgba(255, 255, 255, 0.5);
-            font-family: "Russo One", arial, sans-serif;
-            line-height: 1.25;
-            letter-spacing: 0.06em;
-        }
-
-        .hide {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .remove {
-            display: none !important;
-        }
-
-        .blur {
-            -webkit-filter: blur(12px);
-            filter: blur(12px);
-        }
-
-        .container {
-            height: 100%;
-            display: -webkit-box;
-            display: flex;
-            -webkit-box-pack: center;
-            justify-content: center;
-            -webkit-box-align: center;
-            align-items: center;
-        }
-
-        .loading-init {
-            width: 100%;
-            align-self: center;
-            text-align: center;
-            text-transform: uppercase;
-        }
-
-        .loading-init__header {
-            font-size: 2.2em;
-        }
-
-        .loading-init__status {
-            margin-top: 1em;
-            font-size: 0.8em;
-            opacity: 0.75;
-        }
-
-        .stage-container {
-            overflow: hidden;
-            box-sizing: initial;
-            border: 1px solid #222;
-            margin: -1px;
-        }
-
-        @media (max-width: 840px) {
-            .stage-container {
-                border: none;
-                margin: 0;
-            }
-        }
-
-        .canvas-container {
-            width: 100%;
-            height: 100%;
-            -webkit-transition: -webkit-filter 0.3s;
-            transition: -webkit-filter 0.3s;
-            transition: filter 0.3s;
-            transition: filter 0.3s, -webkit-filter 0.3s;
-        }
-
-        .canvas-container canvas {
-            position: absolute;
-            mix-blend-mode: lighten;
-            -webkit-transform: translateZ(0);
-            transform: translateZ(0);
-        }
-
-        .controls {
-            /* display: none !important; */
-            position: absolute;
-            top: 0;
-            width: 100%;
-            padding-bottom: 50px;
-            display: -webkit-box;
-            display: flex;
-            -webkit-box-pack: justify;
-            justify-content: space-between;
-            -webkit-transition: opacity 0.3s, visibility 0.3s;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-
-        @media (min-width: 840px) {
-            .controls {
-                visibility: visible;
-            }
-
-            .controls.hide:hover {
-                opacity: 1;
-            }
-        }
-
-        .menu {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: rgba(0, 0, 0, 0.42);
-            -webkit-transition: opacity 0.3s, visibility 0.3s;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-
-        .menu__inner-wrap {
-            display: -webkit-box;
-            display: flex;
-            -webkit-box-orient: vertical;
-            -webkit-box-direction: normal;
-            flex-direction: column;
-            -webkit-box-pack: center;
-            justify-content: center;
-            -webkit-box-align: center;
-            align-items: center;
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            -webkit-transition: opacity 0.3s;
-            transition: opacity 0.3s;
-        }
-
-        .menu__header {
-            margin-top: auto;
-            margin-bottom: 8px;
-            padding-top: 16px;
-            font-size: 2em;
-            text-transform: uppercase;
-        }
-
-        .menu__subheader {
-            margin-bottom: auto;
-            padding-bottom: 12px;
-            font-size: 0.86em;
-            opacity: 0.8;
-        }
-
-        .menu form {
-            width: 100%;
-            max-width: 400px;
-            padding: 0 10px;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .menu .form-option {
-            display: -webkit-box;
-            display: flex;
-            -webkit-box-align: center;
-            align-items: center;
-            margin: 16px 0;
-            -webkit-transition: opacity 0.3s;
-            transition: opacity 0.3s;
-        }
-
-        .menu .form-option label {
-            display: block;
-            width: 50%;
-            padding-right: 12px;
-            text-align: right;
-            text-transform: uppercase;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        .menu .form-option--select select {
-            display: block;
-            width: 50%;
-            height: 30px;
-            font-size: 1rem;
-            font-family: "Russo One", arial, sans-serif;
-            color: rgba(255, 255, 255, 0.5);
-            letter-spacing: 0.06em;
-            background-color: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .menu .form-option--select select option {
-            background-color: black;
-        }
-
-        .menu .form-option--checkbox input {
-            display: block;
-            width: 26px;
-            height: 26px;
-            margin: 0;
-            opacity: 0.5;
-        }
-
-        @media (max-width: 840px) {
-            .menu .form-option select,
-            .menu .form-option input {
-                outline: none;
-            }
-        }
-
-        .close-menu-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-        }
-
-        .btn {
-            opacity: 0.16;
-            width: 50px;
-            height: 50px;
-            display: -webkit-box;
-            display: flex;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            cursor: default;
-            -webkit-transition: opacity 0.3s;
-            transition: opacity 0.3s;
-        }
-
-        .btn--bright {
-            opacity: 0.5;
-        }
-
-        @media (min-width: 840px) {
-            .btn:hover {
-                opacity: 0.32;
-            }
-
-            .btn--bright:hover {
-                opacity: 0.75;
-            }
-        }
-
-        .btn svg {
-            display: block;
-            margin: auto;
-        }
-
-        .credits {
-            margin-top: auto;
-            margin-bottom: 10px;
-            padding-top: 6px;
-            font-size: 0.8em;
-            opacity: 0.75;
-        }
-
-        .credits a {
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-        }
-
-        .credits a:hover,
-        .credits a:active {
-            color: rgba(255, 255, 255, 0.75);
-            text-decoration: underline;
-        }
-
-        .help-modal {
-            display: -webkit-box;
-            display: flex;
-            -webkit-box-pack: center;
-            justify-content: center;
-            -webkit-box-align: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            visibility: hidden;
-            -webkit-transition-property: visibility;
-            transition-property: visibility;
-            -webkit-transition-duration: 0.25s;
-            transition-duration: 0.25s;
-        }
-
-        .help-modal__overlay {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            opacity: 0;
-            -webkit-transition-property: opacity;
-            transition-property: opacity;
-            -webkit-transition-timing-function: ease-in;
-            transition-timing-function: ease-in;
-            -webkit-transition-duration: 0.25s;
-            transition-duration: 0.25s;
-        }
-
-        .help-modal__dialog {
-            display: -webkit-box;
-            display: flex;
-            -webkit-box-orient: vertical;
-            -webkit-box-direction: normal;
-            flex-direction: column;
-            -webkit-box-align: center;
-            align-items: center;
-            max-width: 400px;
-            max-height: calc(100vh - 100px);
-            margin: 10px;
-            padding: 20px;
-            border-radius: 0.3em;
-            background-color: rgba(0, 0, 0, 0.4);
-            opacity: 0;
-            -webkit-transform: scale(0.9, 0.9);
-            transform: scale(0.9, 0.9);
-            -webkit-transition-property: opacity, -webkit-transform;
-            transition-property: opacity, -webkit-transform;
-            transition-property: opacity, transform;
-            transition-property: opacity, transform, -webkit-transform;
-            -webkit-transition-timing-function: ease-in;
-            transition-timing-function: ease-in;
-            -webkit-transition-duration: 0.25s;
-            transition-duration: 0.25s;
-        }
-
-        @media (min-width: 840px) {
-            .help-modal__dialog {
-                font-size: 1.25rem;
-                max-width: 500px;
-            }
-        }
-
-        .help-modal__header {
-            font-size: 1.75em;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        .help-modal__body {
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            margin: 1em 0;
-            padding: 1em 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.25);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-            line-height: 1.5;
-            color: rgba(255, 255, 255, 0.75);
-        }
-
-        .help-modal__close-btn {
-            flex-shrink: 0;
-            outline: none;
-            border: none;
-            border-radius: 2px;
-            padding: 0.25em 0.75em;
-            margin-top: 0.36em;
-            font-family: "Russo One", arial, sans-serif;
-            font-size: 1em;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            background-color: rgba(255, 255, 255, 0.25);
-            -webkit-transition: color 0.3s, background-color 0.3s;
-            transition: color 0.3s, background-color 0.3s;
-        }
-
-        .help-modal__close-btn:hover,
-        .help-modal__close-btn:active,
-        .help-modal__close-btn:focus {
-            color: #FFF;
-            background-color: #09F;
-        }
-
-        .help-modal.active {
-            visibility: visible;
-            -webkit-transition-duration: 0.4s;
-            transition-duration: 0.4s;
-        }
-
-        .help-modal.active .help-modal__overlay {
-            opacity: 1;
-            -webkit-transition-timing-function: ease-out;
-            transition-timing-function: ease-out;
-            -webkit-transition-duration: 0.4s;
-            transition-duration: 0.4s;
-        }
-
-        .help-modal.active .help-modal__dialog {
-            opacity: 1;
-            -webkit-transform: scale(1, 1);
-            transform: scale(1, 1);
-            -webkit-transition-timing-function: ease-out;
-            transition-timing-function: ease-out;
-            -webkit-transition-duration: 0.4s;
-            transition-duration: 0.4s;
-        }
-
-        .hide {
-            display: none !important;
-        }
-
-        .type_words {
-            padding: 60px 60px 20px 0px;
-            position: absolute;
-            top: 0px;
-            left: 10px;
-            z-index: 500;
-            color: #ffd700;
-            font-size: 20px;
-            font-family: '行楷', 'Xingkai', '楷体', 'KaiTi', serif;
-        }
-
-        /* 重置样式 */
-        html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed,
-figure, figcaption, footer, header, hgroup,
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline
-}
-
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section {
-    display: block
-}
-
-body {
-    line-height: 1
-}
-
-ol, ul {
-    list-style: none
-}
-
-blockquote, q {
-    quotes: none
-}
-
-blockquote:before, blockquote:after,
-q:before, q:after {
-    content: '';
-    content: none
-}
-
- table {
-    border-collapse: collapse;
-    border-spacing: 0
-}
-
-/* 音乐控制按钮样式 */
-.music-controls {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-}
-
-.music-controls button {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* 初始界面和烟花界面的容器样式 */
-#cover-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: '行楷', 'Xingkai', '楷体', 'KaiTi', serif;
-    color: #ffd700;
-}
-
-#cover-container #text-container {
-    text-align: center;
-    font-size: 40px;
-    margin-top: 20px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 1s ease, transform 1s ease;
-}
-
-#cover-container .options-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 40px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 1s ease, transform 1s ease;
-}
-
-#cover-container .option-btn {
-    padding: 15px 30px;
-    font-size: 24px;
-    font-family: '行楷', 'Xingkai', '楷体', 'KaiTi', serif;
-    background-color: rgba(255, 215, 0, 0.2);
-    color: #ffd700;
-    border: 2px solid #ffd700;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-#cover-container .option-btn:hover {
-    background-color: rgba(255, 215, 0, 0.4);
-    transform: scale(1.05);
-}
-
-#cover-container .music-tip {
-    text-align: center;
-    padding: 10px;
-    color: #ffd700;
-    font-size: 40px;
-    margin-bottom: 10px;
-    font-family: '行楷', 'Xingkai', '楷体', 'KaiTi', serif;
-}
-
-#fireworks-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 999;
-    display: none;
-    /* 新增：确保横屏时容器占满屏幕 */
-    min-height: 100vh;
-    min-width: 100vw;
-}
     </style>
-    <script src="files/js/jquery.min.js" type="text/javascript"></script>
 </head>
 <body>
-    <!-- 新增：强制横屏提示层 -->
-    <div class="orientation-lock">
+    <!-- 强制横屏提示层 -->
+    <div class="orientation-lock" id="orientationLock">
         <div class="icon">📱</div>
         <div class="text">请将手机横屏观看</div>
         <div class="subtext">横屏后可获得最佳观赏效果</div>
+        <div class="wechat-tip" id="wechatTip">
+            若横屏后仍显示此提示，请点击右上角 → 在浏览器中打开
+        </div>
+        <button onclick="forceHideOrientationLock()">
+            仍要继续（竖屏模式）
+        </button>
     </div>
 
-    <!-- 音频标签 -->
-    <audio
-      id="audioDom"
-      src="music/11++China-X_徐梦圆.mp3"
-      preload="auto"
-      loop="loop"
-    ></audio>
-    
+    <!-- 烟花画布 -->
+    <canvas id="fireworksCanvas"></canvas>
+
+    <!-- 音乐播放音频 -->
+    <audio id="music" loop preload="auto">
+        <!-- 替换为你的音乐文件地址（建议放在GitHub仓库的files/music/目录下） -->
+        <source src="files/music/happy_new_year.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- 音乐控制按钮 -->
-    <div class="music-controls">
-      <button id="musicBtn" onclick="toggleMusic()">
-        <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18l14-9z"/></svg>
-        <svg id="pauseIcon" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-      </button>
+    <div class="music-btn" id="musicBtn" onclick="toggleMusic()">
+        🎵
     </div>
 
-    <!-- 初始封面界面 -->
-    <div id="cover-container">
-        <!-- 播放提示 -->
-        <div class="music-tip">点击一下屏幕就开始喽！</div>
-
-        <!-- 原有核心内容 -->
-        <div id="text-container"></div>
-        <div class="options-container" id="options-container"></div>
+    <!-- 祝福文字 -->
+    <div class="cover-text" id="coverText">
+        新年快乐！<br>愿你岁岁年年皆有欢喜
     </div>
 
-    <!-- 烟花界面 -->
-    <div id="fireworks-container">
-        <div style="height: 0; width: 0; position: absolute; visibility: hidden">
-            <svg xmlns="http://www.w3.org/2000/svg">
-                <symbol id="icon-play" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"></path>
-                </symbol>
-                <symbol id="icon-pause" viewBox="0 0 24 24">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
-                </symbol>
-                <symbol id="icon-close" viewBox="0 0 24 24">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path>
-                </symbol>
-                <symbol id="icon-settings" viewBox="0 0 24 24">
-                    <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path>
-                </symbol>
-                <symbol id="icon-sound-on" viewBox="0 0 24 24">
-                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path>
-                </symbol>
-                <symbol id="icon-sound-off" viewBox="0 0 24 24">
-                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path>
-                </symbol>
-            </svg>
-        </div>
-
-        <!-- App -->
-        <div class="container">
-            <div class="loading-init">
-                <div class="loading-init__header"></div>
-                <div class="loading-init__status"></div>
-            </div>
-            <div class="stage-container remove">
-                <div class="page_two hide">
-                    <div id="text" style="display: none">
-                        <p>
-                            🌟 新年祝福 🌟<br /><br />
-                            亲爱的朋友们：<br /><br />
-                            时间过得真快，转眼间我们已经走过了这么多春秋。
-                            无论是曾经的同窗岁月，
-                            还是如今的各自奋斗，
-                            那些一起度过的时光都是我们生命中最珍贵的财富。<br /><br />
-                            在这辞旧迎新的时刻，
-                            愿我们都能保持那份青春的活力与热情，
-                            不忘初心，追逐梦想。
-                            愿大家在新的一年里，
-                            身体健康，万事如意，
-                            学业有成，事业腾飞。<br /><br />
-                            最后，让我们以烟花为证，许下最美好的愿望，
-                            共同迎接充满希望的新一年。
-                            愿所有美好都与我们相遇，
-                            愿我们的友谊如烟花般绚烂，地久天长。<br /><br />
-                            🎉 新年快乐，万事如意 🎉
-                        </p>
-                    </div>
-                    <div class="type_words" id="contents" style="font-size: 1.5rem; line-height: 1.8rem"></div>
-                </div>
-                <div class="canvas-container">
-                    <canvas id="trails-canvas"></canvas>
-                    <canvas id="main-canvas"></canvas>
-                </div>
-
-                <div class="menu hide">
-                    <div class="menu__inner-wrap">
-                        <div class="menu__header">设置</div>
-
-                        <form>
-                            <div class="form-option form-option--select">
-                                <label class="shell-type-label">烟花类型</label>
-                                <select class="shell-type"></select>
-                            </div>
-                            <div class="form-option form-option--select">
-                                <label class="shell-size-label">烟花大小</label>
-                                <select class="shell-size"></select>
-                            </div>
-                            <div class="form-option form-option--select">
-                                <label class="quality-ui-label">画质</label>
-                                <select class="quality-ui"></select>
-                            </div>
-                            <div class="form-option form-option--select">
-                                <label class="sky-lighting-label">天空照明</label>
-                                <select class="sky-lighting"></select>
-                            </div>
-                            <div class="form-option form-option--select">
-                                <label class="scaleFactor-label">规模</label>
-                                <select class="scaleFactor"></select>
-                            </div>
-                            <div class="form-option form-option--checkbox">
-                                <label class="auto-launch-label">自动发射</label>
-                                <input class="auto-launch" type="checkbox" />
-                            </div>
-                            <div class="form-option form-option--checkbox form-option--finale-mode">
-                                <label class="finale-mode-label">结局模式</label>
-                                <input class="finale-mode" type="checkbox" />
-                            </div>
-                            <div class="form-option form-option--checkbox">
-                                <label class="hide-controls-label">隐藏控制器</label>
-                                <input class="hide-controls" type="checkbox" />
-                            </div>
-                            <div class="form-option form-option--checkbox form-option--fullscreen">
-                                <label class="fullscreen-label">全屏</label>
-                                <input class="fullscreen" type="checkbox" />
-                            </div>
-                            <div class="form-option form-option--checkbox">
-                                <label class="long-exposure-label">打开快门</label>
-                                <input class="long-exposure" type="checkbox" />
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="help-modal">
-                <div class="help-modal__overlay"></div>
-                <div class="help-modal__dialog">
-                    <div class="help-modal__header"></div>
-                    <div class="help-modal__body"></div>
-                    <button type="button" class="help-modal__close-btn">关闭</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript文件 -->
-    <script src="files/jump.js"></script>
-    <script src="files/js/fscreen%401.0.1.js"></script>
-    <script src="files/js/Stage%400.1.4.js"></script>
-    <script src="files/js/MyMath.js"></script>
-    <script src="files/js/script.js"></script>
-
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
-        // 新增：dth && window.innerWidth < 768) {
-                // 移动端竖屏，显示强制横屏提示
-                document.querySelector('.orientation-lock').style.display = 'flex';
-            }
-        });
+        // ========== 全局变量 ==========
+        let canvas, ctx, fireworks = [], particles = [], mouse = {x: 0, y: 0};
+        let musicPlaying = false;
+        const orientationLock = document.getElementById('orientationLock');
+        const wechatTip = document.getElementById('wechatTip');
+        const music = document.getElementById('music');
+        const musicBtn = document.getElementById('musicBtn');
+        const coverText = document.getElementById('coverText');
 
-        // 音乐播放核心函数
-        const audioDom = document.getElementById(ioDom');
-   }, 10);oayMusic() {
-my().then(() => {
-            console.log('音乐播放成功'r     Canvas       // 播放后隐藏提示
-            documrrySelCanvasecttyle.display =';
-                // 音乐播放成功后开始显示文本内页面加载时检查 幕方向extDisplay();
-                // 存load态
- fun tion() {
-            if (window.inn  H igh  > window.innerWid h && w nd w.inserWidth < 768e {Interval() => {
-    移动端竖屏，显示强制横 提示          localStgecumm(i.queryScllctoayi.g
-         -lock').style.display = 'flex';
-            }
-        }           localStorage.setItem('musicTime', audioDom.currentTime);
-                }, 1000);
-            }).catch(err => {
-                console.log('播放报错：', err);
-            });
+        // ========== 第一步：微信环境识别与横屏检测 ==========
+        function isWeChat() {
+            const ua = navigator.userAgent.toLowerCase();
+            return ua.includes('micromessenger');
         }
 
-        // 监听首次点击事件，播放音乐（只触发一次）
-        document.addEventListener('click', function firstClickPlay() {
-            playMusic();
-            document.removeEventListener('click', firstClickPlay);
-        }, { once: true });
-
-        // 封面文本内容
-        const texts = [
-            "✨ 欢迎来到新年烟花秀 ✨",
-            "在这个特别的时刻",
-            "我想对你说声..."
-        ];
-
-        let currentIndex = 0;
-        let textInterval;
-        const textContainer = document.getElementById('text-container');
-        const optionsContainer = document.getElementById('options-container');
-
-        function createFirework() {
-            const firework = document.createElement('div');
-            firework.className = 'firework';
-            firework.style.left = Math.random() * 100 + '%';
-            firework.style.top = Math.random() * 100 + '%';
-            document.body.appendChild(firework);
-            
-            setTimeout(() => {
-                firework.remove();
-            }, 2000);
-        }
-
-        function showText() {
-            if (currentIndex < texts.length) {
-                textContainer.textContent = texts[currentIndex];
-                textContainer.classList.remove('show');
-                void textContainer.offsetWidth;
-                textContainer.classList.add('show');
+        function checkOrientation() {
+            // 非微信环境：标准检测
+            if (!isWeChat()) {
+                const isLandscape1 = window.orientation === 90 || window.orientation === -90;
+                const isLandscape2 = window.innerWidth > window.innerHeight;
+                const isLandscape3 = window.matchMedia("(orientation: landscape)").matches;
+                const isLandscape = isLandscape1 || isLandscape2 || isLandscape3;
                 
-                // 创建一些烟花效果
-                for (let i = 0; i < 5; i++) {
-                    setTimeout(createFirework, i * 200);
-                }
-                
-                currentIndex++;
-            } else {
-                clearInterval(textInterval);
-                // 显示问题和选项
-                showQuestion();
-            }
-        }
-
-        function showQuestion() {
-            textContainer.textContent = "你是我的...";
-            textContainer.classList.remove('show');
-            void textContainer.offsetWidth;
-            textContainer.classList.add('show');
-            
-            // 创建选项按钮
-            optionsContainer.innerHTML = `
-                <button class="option-btn" onclick="showSubOptions('teacher')">老师</button>
-                <button class="option-btn" onclick="showSubOptions('counselor')">辅导员</button>
-                <button class="option-btn" onclick="showSubOptions('university-friend')">大学朋友</button>
-                <button class="option-btn" onclick="showSubOptions('high-school')">高中同学</button>
-                <button class="option-btn" onclick="showSubOptions('middle-school')">初中同学</button>
-                <button class="option-btn" onclick="selectRelation('boss')">大佬</button>
-            `;
-            optionsContainer.classList.add('show');
-        }
-
-        function showSubOptions(type) {
-            textContainer.textContent = "请选择具体对象：";
-            textContainer.classList.remove('show');
-            void textContainer.offsetWidth;
-            textContainer.classList.add('show');
-            
-            let subOptionsHTML = '';
-            
-            switch(type) {
-                case 'teacher':
-                    subOptionsHTML = `
-                        <button class="option-btn" onclick="selectRelation('teacher-lim')">李晓明老师</button>
-                        <button class="option-btn" onclick="selectRelation('teacher-university')">大学老师</button>
-                        <button class="option-btn" onclick="showQuestion()">返回</button>
-                    `;
-                    break;
-                case 'counselor':
-                    subOptionsHTML = `
-                        <button class="option-btn" onclick="selectRelation('counselor-liu')">刘佳欣（欣姐）</button>
-                        <button class="option-btn" onclick="showQuestion()">返回</button>
-                    `;
-                    break;
-                case 'university-friend':
-                    subOptionsHTML = `
-                        <button class="option-btn" onclick="selectRelation('friend-university')">通用群发</button>
-                        <button class="option-btn" onclick="showQuestion()">返回</button>
-                    `;
-                    break;
-                case 'high-school':
-                    subOptionsHTML = `
-                        <button class="option-btn" onclick="selectRelation('friend-high-school')">刘任萤</button>
-                        <button class="option-btn" onclick="showQuestion()">返回</button>
-                    `;
-                    break;
-                case 'middle-school':
-                    subOptionsHTML = `
-                        <button class="option-btn" onclick="selectRelation('friend-middle-school-wang')">王馨若（老王）</button>
-                        <button class="option-btn" onclick="selectRelation('friend-middle-school-cai')">蔡学城（菜狗）</button>
-                        <button class="option-btn" onclick="selectRelation('friend-middle-school-luo')">罗朗（罗教练）</button>
-                        <button class="option-btn" onclick="showQuestion()">返回</button>
-                    `;
-                    break;
-            }
-            
-            optionsContainer.innerHTML = subOptionsHTML;
-            optionsContainer.classList.add('show');
-        }
-
-        function selectRelation(relation) {
-            // 存储选择的关系类型到localStorage
-            localStorage.setItem('relationType', relation);
-            
-            // 显示过渡文本
-            textContainer.textContent = "感谢你的回答，准备好欣赏烟花了吗？";
-            optionsContainer.classList.remove('show');
-            
-            // 创建一些烟花效果
-            for (let i = 0; i < 10; i++) {
-                setTimeout(createFirework, i * 100);
-            }
-            
-            // 切换到烟花界面
-            setTimeout(() => {
-                document.getElementById('cover-container').style.display = 'none';
-                document.getElementById('fireworks-container').style.display = 'block';
-                // 启动烟花效果
-                startFireworks();
-            }, 2000);
-        }
-
-        function startTextDisplay() {
-            textInterval = setInterval(showText, 4000); 
-            showText(); // 立即显示第一个文本
-        }
-        
-        // 页面加载完成后开始
-        window.onload = function() {
-            // 原有自动播放尝试保留（兼容部分宽松浏览器）
-            setTimeout(function() {
-                audioDom.play().catch(function(error) {
-                    console.log('自动播放失败，需要用户交互:', error);
-                });
-            }, 1000);
-        };
-
-        // 音乐控制函数
-        function musicPlay(isPlay) {
-            var media = document.querySelector("#audioDom");
-            if (isPlay && media.paused) {
-                media.play();
-                document.getElementById('playIcon').style.display = 'none';
-                document.getElementById('pauseIcon').style.display = 'block';
-            }
-            if (!isPlay && !media.paused) {
-                media.pause();
-                document.getElementById('playIcon').style.display = 'block';
-                document.getElementById('pauseIcon').style.display = 'none';
-            }
-        }
-        
-        function toggleMusic() {
-            var media = document.querySelector("#audioDom");
-            musicPlay(media.paused);
-        }
-
-        // 启动烟花效果
-        function startFireworks() {
-            // 自动开始烟花秀
-            setTimeout(() => {
-                start();
-                fireworks();
-            }, 1600);
-            console.log(
-                updateConfig({
-                    autoLaunch: true,
-                })
-            );
-        }
-
-        // 烟花效果函数
-        function fireworks() {
-            $(".page_one").addClass("hide");
-            $(".page_two").removeClass("hide");
-        }
-
-        function start() {
-            // 根据选择的关系类型显示不同的祝福语
-            let relationType = localStorage.getItem('relationType') || 'friend';
-            let 祝福语 = "";
-            
-            switch(relationType) {
-                // 老师
-                case 'teacher-lim':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致李晓明老师<br /><br />
-                        李老师，除夕快乐！给您拜个早年🧧。无论时光过去多久，您的教诲始终是我前行路上的光亮。2026 马年，祝您身体龙马精神，工作一马平川，桃李满天下，春晖遍四方！感谢您的栽培，祝您和家人阖家幸福，马到成功！<br /><br />
-                        🎉 新年快乐，敬爱的李老师 🎉
-                    `;
-                    break;
-                case 'teacher-university':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致大学老师<br /><br />
-                        老师们，除夕快乐！给您和家人拜年了。感谢您平日里的悉心教导，值此丙午马年到来之际，祝您身体龙马精神，工作一马当先，学术生涯万马奔腾！愿您新的一年桃李芬芳，阖家幸福，万事皆胜意！<br /><br />
-                        🎉 新年快乐，敬爱的老师们 🎉
-                    `;
-                    break;
-                
-                // 辅导员
-                case 'counselor-liu':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致刘佳欣（欣姐）<br /><br />
-                        欣姐，除夕快乐！给你拜个早年啦🧨！在学校多亏了你的 "保驾护航"，早就把你当成靠谱的大姐姐了。2026 马年，祝你不仅工作 "马" 力全开，生活更要潇洒自在！新的一年，希望你少点操心，多点开心，颜值逆生长，万事皆胜意！祝姐阖家幸福，马年行大运！<br /><br />
-                        🎉 新年快乐，亲爱的欣姐 🎉
-                    `;
-                    break;
-                
-                // 大学朋友
-                case 'friend-university':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致大学朋友<br /><br />
-                        家人们，除夕快乐！给你和家人拜年了。感念大学期间的同窗之谊与相互扶持，值此丙午马年到来之际，祝你身体龙马精神，事业一马当先，人生前路万马奔腾！愿你新的一年前程似锦，阖家幸福，万事皆胜意！<br /><br />
-                        🎉 新年快乐，我的家人们 🎉
-                    `;
-                    break;
-                
-                // 高中同学
-                case 'friend-high-school':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致刘任萤<br /><br />
-                        好兄弟，除夕快乐！高中一起挑灯夜战的日子仿佛就在昨天。2026 马年，祝你在人生的赛道上一马绝尘，所有的梦想都能如愿以偿。愿你鲜衣怒马少年时，不负韶华行且知。新年快乐，万事胜意！<br /><br />
-                        🎉 新年快乐，好兄弟 🎉
-                    `;
-                    break;
-                
-                // 初中同学
-                case 'friend-middle-school-wang':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致王馨若（老王）<br /><br />
-                        老王，除夕快乐！咱这交情就不整那些虚的了。2026 马年，祝你这匹 "千里马" 跑得比谁都快，烦恼追不上，钞票挡不住！新的一年，继续霸气侧漏，既有岁月静好，又有暴富运气，咱们友谊万岁，马到成功！<br /><br />
-                        🎉 新年快乐，老王 🎉
-                    `;
-                    break;
-                case 'friend-middle-school-cai':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致蔡学城（菜狗）<br /><br />
-                        菜狗，除夕大吉！祝你在 2026 马年彻底 "逆袭"，再也不当 "菜狗"，要做就做 "马中赤兔"！祝你事业一马当先，赚钱马不停蹄，把以前吃过的 "亏" 都变成现在的 "金"！过年多吃点，别真成菜狗了，新年快乐，兄弟！<br /><br />
-                        🎉 新年快乐，菜狗 🎉
-                    `;
-                    break;
-                case 'friend-middle-school-luo':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致罗朗（罗教练）<br /><br />
-                        罗教练，除夕快乐！给你拜个早年！2026 马年，祝您 "执教" 的人生球队连战连捷！愿你身体龙马精神，事业策马扬鞭，不管是生活还是工作，都能稳稳拿捏，带队夺冠！新年快乐，等你有空再带带我们！<br /><br />
-                        🎉 新年快乐，罗教练 🎉
-                    `;
-                    break;
-                
-                // 大佬
-                case 'boss':
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致蒙睿曦（大佬）<br /><br />
-                        大佬（蒙睿曦），马年快乐！2026 年继续做校园里最靓的仔！祝你在新的一年里，大一的探索之旅一路开挂，想做的事都能 "一键运行" 无报错。愿你鲜衣怒马，不仅期末绩点漂亮，生活里的开心事也能像消息推送一样源源不断。新的一年，咱们常联系，不管是分享趣事还是吐槽烦恼，随时在线！祝你万事胜意，假期玩得开心！新年快乐，开学见！<br /><br />
-                        🎉 新年快乐，我的大佬 🎉
-                    `;
-                    break;
-                
-                // 默认祝福语
-                default:
-                    祝福语 = `
-                        🌟 新年祝福 🌟<br /><br />
-                        致亲爱的你<br /><br />
-                        除夕快乐！在这辞旧迎新的时刻，祝你在 2026 马年身体健康，万事如意，心想事成！愿你新的一年里，所有的梦想都能实现，所有的努力都能得到回报。新年快乐！<br /><br />
-                        🎉 新年快乐 🎉
-                    `;
-                    break;
-            }
-            
-            let str = 祝福语;
-            let str_ = "";
-            let i = 0;
-            let content = document.getElementById("contents");
-            let timer = setInterval(() => {
-                if (str_.length < str.length) {
-                    str_ += str[i++];
-                    content.innerHTML =
-                        "<p>" +
-                        str_ +
-                        '<span class="xx" style="opacity: 1;    color: white;">∎</span></p>'; //打印时加光标
+                if (isLandscape) {
+                    orientationLock.style.display = 'none';
+                    resizeCanvas();
                 } else {
-                    clearInterval(timer);
-                    content.innerHTML = "<p>" + str_ + "</p>";
+                    orientationLock.style.display = window.innerWidth < 768 ? 'flex' : 'none';
                 }
-            }, 100);
+            } else {
+                // 微信环境：特殊适配
+                try {
+                    if (window.WeixinJSBridge) {
+                        WeixinJSBridge.invoke('setScreenOrientation', {
+                            'orientation': 'landscape'
+                        }, function(res) {});
+                    }
+                } catch (e) {}
+                
+                const isLandscape = window.innerWidth / window.innerHeight > 1.2;
+                if (isLandscape) {
+                    orientationLock.style.display = 'none';
+                    resizeCanvas();
+                } else {
+                    orientationLock.style.display = 'flex';
+                }
+            }
         }
 
-        // 页面加载完成后获取访问量
-        $(function () {
-            $.get("https://ai8.top/api/addViews?id=1016432");
+        // 手动关闭横屏提示
+        function forceHideOrientationLock() {
+            orientationLock.style.display = 'none';
+            localStorage.setItem('forceHideOrientation', 'true');
+            resizeCanvas();
+        }
+
+        // ========== 第二步：音乐控制逻辑 ==========
+        function toggleMusic() {
+            if (musicPlaying) {
+                music.pause();
+                musicBtn.innerHTML = "🎵";
+                musicPlaying = false;
+            } else {
+                // 微信环境需要用户交互才能播放音频
+                music.play().then(() => {
+                    musicPlaying = true;
+                    musicBtn.innerHTML = "🔊";
+                }).catch(err => {
+                    alert("播放失败，请点击允许音频播放权限");
+                });
+            }
+        }
+
+        // ========== 第三步：烟花效果核心逻辑 ==========
+        // 初始化画布
+        function initCanvas() {
+            canvas = document.getElementById('fireworksCanvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            
+            // 监听鼠标/触摸事件
+            canvas.addEventListener('mousemove', function(e) {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+            
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY;
+            });
+            
+            canvas.addEventListener('click', createFirework);
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                createFirework();
+            });
+            
+            // 自动生成烟花
+            setInterval(createFirework, 1500);
+            
+            // 开始动画循环
+            animate();
+        }
+
+        // 调整画布大小
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // 创建烟花
+        function createFirework() {
+            // 随机位置（如果没有鼠标位置则用屏幕中心）
+            const x = mouse.x || canvas.width / 2;
+            const y = mouse.y || canvas.height / 2;
+            
+            // 随机颜色
+            const hue = Math.floor(Math.random() * 360);
+            fireworks.push(new Firework(x, canvas.height, x, y, hue));
+        }
+
+        // 烟花类
+        class Firework {
+            constructor(x, y, targetX, targetY, hue) {
+                this.x = x;
+                this.y = y;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.speed = 2;
+                this.gravity = 0.05;
+                this.velocity = {x: 0, y: 0};
+                this.hue = hue;
+                this.brightness = 100;
+                this.targetRadius = 8;
+                this.done = false;
+            }
+
+            update() {
+                // 计算目标方向
+                const dx = this.targetX - this.x;
+                const dy = this.targetY - this.y;
+                
+                // 到达目标后爆炸
+                if (Math.sqrt(dx * dx + dy * dy) < this.targetRadius) {
+                    // 创建粒子
+                    for (let i = 0; i < 100; i++) {
+                        particles.push(new Particle(this.targetX, this.targetY, this.hue));
+                    }
+                    this.done = true;
+                    return;
+                }
+                
+                // 移动烟花
+                const angle = Math.atan2(dy, dx);
+                this.velocity.x = Math.cos(angle) * this.speed;
+                this.velocity.y = Math.sin(angle) * this.speed;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                
+                // 重力影响
+                this.velocity.y += this.gravity;
+                
+                // 亮度渐变
+                this.brightness = Math.max(50, this.brightness - 0.5);
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = `hsl(${this.hue}, 100%, ${this.brightness}%)`;
+                ctx.fill();
+            }
+        }
+
+        // 粒子类
+        class Particle {
+            constructor(x, y, hue) {
+                this.x = x;
+                this.y = y;
+                this.speed = Math.random() * 3 + 1;
+                this.angle = Math.random() * Math.PI * 2;
+                this.velocity = {
+                    x: Math.cos(this.angle) * this.speed,
+                    y: Math.sin(this.angle) * this.speed
+                };
+                this.gravity = 0.05;
+                this.friction = 0.98;
+                this.hue = hue;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.01 + 0.005;
+            }
+
+            update() {
+                // 摩擦力
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                
+                // 重力
+                this.velocity.y += this.gravity;
+                
+                // 移动粒子
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                
+                // 透明度衰减
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = `hsl(${this.hue}, 100%, 70%)`;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            // 半透明背景（拖影效果）
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新和绘制所有烟花
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                const firework = fireworks[i];
+                firework.update();
+                firework.draw();
+                
+                // 移除已完成的烟花
+                if (firework.done) {
+                    fireworks.splice(i, 1);
+                }
+            }
+            
+            // 更新和绘制所有粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.update();
+                particle.draw();
+                
+                // 移除透明的粒子
+                if (particle.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // ========== 第四步：页面初始化 ==========
+        window.addEventListener('load', function() {
+            // 初始化画布
+            initCanvas();
+            
+            // 微信环境处理
+            if (!isWeChat()) {
+                wechatTip.style.display = 'none';
+            }
+            
+            // 读取手动关闭记录
+            if (localStorage.getItem('forceHideOrientation') === 'true') {
+                orientationLock.style.display = 'none';
+            }
+            
+            // 横屏检测
+            checkOrientation();
+            setInterval(checkOrientation, 300);
+            
+            // 隐藏封面文字（可选：3秒后隐藏）
+            setTimeout(() => {
+                coverText.style.opacity = 0;
+                coverText.style.transition = 'opacity 2s ease';
+            }, 5000);
         });
 
-        // 百度统计
-        var _hmt = _hmt || [];
-        (function () {
-            var hm = document.createElement("script");
-            hm.src = "https://hm.baidu.com/hm.js?c314395e62fb55e30828e0ea8cca8b3a";
-            var s = document.getElementsByTagName("script")[0];
-            s.parentNode.insertBefore(hm, s);
-        })();
+        // 监听屏幕旋转和大小变化
+        window.addEventListener('orientationchange', checkOrientation);
+        window.addEventListener('resize', function() {
+            checkOrientation();
+            resizeCanvas();
+        });
+
+        // 微信JS桥就绪事件
+        document.addEventListener('WeixinJSBridgeReady', checkOrientation);
     </script>
 </body>
 </html>
